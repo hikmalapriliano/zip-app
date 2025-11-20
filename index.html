@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP Compressor Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries (Wajib Online) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        /* --- STYLE.CSS (FINAL FIX) --- */
+        :root {
+            --primary: #3B82F6;
+            --primary-hover: #2563EB;
+            --secondary: #1E293B;
+            --surface: #FFFFFF;
+            --background: #F1F5F9;
+            --border: #E2E8F0;
+            --text-main: #0F172A;
+            --text-sub: #64748B;
+            --success: #10B981;
+            --danger: #EF4444;
+            --radius: 12px;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: #F1F5F9;
+            background-color: var(--background);
+            background-image: radial-gradient(#E2E8F0 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(to bottom, #ffffff, #f8fafc);
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #EFF6FF;
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 1px solid #DBEAFE;
+        }
+
+        header h1 { font-size: 1.5rem; font-weight: 700; color: var(--secondary); margin-bottom: 0.5rem; }
+        header p { color: var(--text-sub); font-size: 0.95rem; }
+
+        .main-content { padding: 2rem; }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed #CBD5E1;
+            border-radius: var(--radius);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            background: #F8FAFC;
+            transition: all 0.2s;
+            /* Memastikan semua konten di dalam centered */
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: #EFF6FF; }
+        .icon-wrapper {
+            width: 50px; height: 50px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--border);
+        }
+        .icon-wrapper i { font-size: 1.5rem; color: var(--primary); }
+        .drop-zone h3 { font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--secondary); }
+        .drop-zone p { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 1rem; }
+
+        /* File List */
+        .file-section { margin-top: 1.5rem; display: none; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .section-title { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); text-transform: uppercase; }
+        .clear-btn { font-size: 0.8rem; color: var(--danger); background: none; border: none; cursor: pointer; font-weight: 500; }
+        
+        .file-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto; }
+        .file-item {
+            display: flex; align-items: center; padding: 0.75rem; background: white;
+            border: 1px solid var(--border); border-radius: 8px;
+        }
+        .file-type-icon {
+            width: 32px; height: 32px; background: #F1F5F9; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; color: var(--text-sub); margin-right: 0.75rem;
+        }
+        .file-info { flex: 1; overflow: hidden; }
+        .file-name { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+        .file-size { font-size: 0.75rem; color: var(--text-sub); }
+        .remove-btn { background: none; border: none; color: #CBD5E1; cursor: pointer; padding: 0.5rem; }
+        .remove-btn:hover { color: var(--danger); }
+
+        /* Input */
+        .options-panel { margin-top: 1.5rem; background: #F8FAFC; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--secondary); }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper input {
+            width: 100%; padding: 0.6rem 1rem; padding-right: 3rem; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 0.9rem; outline: none;
+        }
+        .input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+        .input-suffix { position: absolute; right: 1rem; color: var(--text-sub); font-size: 0.85rem; }
+
+        /* Buttons */
+        .action-bar { margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .btn {
+            display: inline-flex; /* FIX: Mengubah ke inline-flex agar bisa dicenter */
+            align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem;
+            border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none; transition: all 0.2s;
+        }
+        
+        /* Khusus tombol di dropzone, pastikan margin auto jika display flex container */
+        #browseBtn {
+            margin: 0 auto; /* Memastikan tombol berada di tengah */
+        }
+
+        .btn-primary {
+            background-color: #3B82F6;
+            background-color: var(--primary);
+            color: white;
+            width: 100%; /* Full width di action bar */
+        }
+        .btn-primary:hover { background-color: #2563EB; transform: translateY(-1px); }
+        .btn-primary:disabled { background-color: #94A3B8; cursor: not-allowed; transform: none; }
+
+        .btn-success {
+            background-color: #10B981;
+            background-color: var(--success);
+            color: white;
+            width: 100%; /* Full width di action bar */
+        }
+        .btn-success:hover { background-color: #059669; transform: translateY(-1px); }
+        .btn-success:disabled { background-color: #E2E8F0; color: #94A3B8; cursor: not-allowed; transform: none; }
+
+        .btn-secondary { background: white; border: 1px solid #CBD5E1; color: var(--text-main); }
+        .btn-secondary:hover { background: #F8FAFC; border-color: #94A3B8; }
+
+        /* Progress */
+        .progress-container { margin-top: 1rem; display: none; }
+        .progress-track { height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; margin-bottom: 0.25rem; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.2s; }
+        .progress-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-sub); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #1E293B; color: white; padding: 0.75rem 1.5rem; border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999; opacity: 0;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        footer { margin-top: 2rem; font-size: 0.75rem; color: var(--text-sub); }
+
+        @media (max-width: 480px) { .action-bar { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="brand-badge">
+                <i class="fas fa-cube"></i> <span>ZIP Compressor Pro</span>
+            </div>
+            <h1>Kompres File Anda</h1>
+            <p>Aman, cepat, dan gratis. Seret file di bawah ini.</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Drag & Drop -->
+            <div class="drop-zone" id="dropZone">
+                <div class="icon-wrapper"><i class="fas fa-cloud-arrow-up"></i></div>
+                <h3>Drag & Drop File Disini</h3>
+                <p>atau klik untuk mencari</p>
+                <button class="btn btn-secondary" id="browseBtn" type="button">Pilih File</button>
+                <input type="file" id="fileInput" hidden multiple>
+            </div>
+
+            <!-- List File -->
+            <div class="file-section" id="fileSection">
+                <div class="section-header">
+                    <span class="section-title">File Terpilih (<span id="fileCount">0</span>)</span>
+                    <button class="clear-btn" id="clearAllBtn">Hapus Semua</button>
+                </div>
+                <div class="file-list" id="fileList"></div>
+            </div>
+
+            <!-- Options -->
+            <div class="options-panel">
+                <div class="input-group">
+                    <label>Nama File ZIP (Opsional)</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="zipName" placeholder="archive_files" value="compressed_files">
+                        <span class="input-suffix">.zip</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
+                <div class="progress-labels">
+                    <span id="progressStatus">Menyiapkan...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="action-bar">
+                <button class="btn btn-primary" id="zipBtn">
+                    <i class="fas fa-file-zipper"></i> Mulai Kompresi
+                </button>
+                <button class="btn btn-success" id="downloadBtn" disabled>
+                    <i class="fas fa-download"></i> Download ZIP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>&copy; 2025 HikmalApriliano | Privacy First Compression</footer>
+
+    <div class="toast" id="toast">
+        <i class="fas fa-info-circle"></i> <span id="toastMsg">Notifikasi</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
+                // Silent fail or console log, user can still try
+                console.warn("Libraries might not be fully loaded yet.");
+            }
+
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const fileList = document.getElementById('fileList');
+            const fileSection = document.getElementById('fileSection');
+            const zipBtn = document.getElementById('zipBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const zipNameInput = document.getElementById('zipName');
+            
+            let files = [];
+            let zipBlob = null;
+
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function showToast(msg, isError = false) {
+                const toast = document.getElementById('toast');
+                const toastMsg = document.getElementById('toastMsg');
+                toastMsg.textContent = msg;
+                toast.style.background = isError ? '#EF4444' : '#1E293B';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+
+            function renderFiles() {
+                fileList.innerHTML = '';
+                if (files.length === 0) {
+                    fileSection.style.display = 'none';
+                    downloadBtn.disabled = true;
+                    return;
+                }
+                
+                fileSection.style.display = 'block';
+                document.getElementById('fileCount').textContent = files.length;
+
+                files.forEach((file, index) => {
+                    const iconClass = file.type.includes('image') ? 'fa-image' : 
+                                    file.type.includes('pdf') ? 'fa-file-pdf' : 'fa-file';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `
+                        <div class="file-type-icon"><i class="fas ${iconClass}"></i></div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatBytes(file.size)}</div>
+                        </div>
+                        <button class="remove-btn" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    fileList.appendChild(item);
+                });
+
+                zipBlob = null;
+                downloadBtn.disabled = true;
+                document.getElementById('progressContainer').style.display = 'none';
+                zipBtn.disabled = false;
+                zipBtn.innerHTML = '<i class="fas fa-file-zipper"></i> Mulai Kompresi';
+            }
+
+            browseBtn.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                e.stopPropagation(); // Prevent dropzone click
+                fileInput.click();
+            });
+
+            dropZone.addEventListener('click', (e) => {
+                if(e.target !== browseBtn) fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    const newFiles = Array.from(e.target.files);
+                    newFiles.forEach(f => {
+                        if(!files.some(exist => exist.name === f.name && exist.size === f.size)){
+                            files.push(f);
+                        }
+                    });
+                    renderFiles();
+                    showToast(`${newFiles.length} file ditambahkan`);
+                    fileInput.value = ''; 
+                }
+            });
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    const newFiles = Array.from(e.dataTransfer.files);
+                    newFiles.forEach(f => files.push(f));
+                    renderFiles();
+                    showToast(`${newFiles.length} file ditambahkan`);
+                }
+            });
+
+            fileList.addEventListener('click', (e) => {
+                const btn = e.target.closest('.remove-btn');
+                if (btn) {
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    files.splice(index, 1);
+                    renderFiles();
+                }
+            });
+
+            clearAllBtn.addEventListener('click', () => {
+                files = [];
+                renderFiles();
+                showToast("Semua file dihapus");
+            });
+
+            zipBtn.addEventListener('click', async () => {
+                if (files.length === 0) {
+                    showToast("Pilih file terlebih dahulu!", true);
+                    return;
+                }
+
+                const zip = new JSZip();
+                files.forEach(file => zip.file(file.name, file));
+
+                zipBtn.disabled = true;
+                zipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+                const pContainer = document.getElementById('progressContainer');
+                const pBar = document.getElementById('progressBar');
+                const pPercent = document.getElementById('progressPercent');
+                
+                pContainer.style.display = 'block';
+
+                try {
+                    zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
+                        const percent = metadata.percent.toFixed(0) + "%";
+                        pBar.style.width = percent;
+                        pPercent.textContent = percent;
+                    });
+
+                    zipBtn.disabled = false;
+                    zipBtn.innerHTML = '<i class="fas fa-check"></i> Selesai';
+                    downloadBtn.disabled = false;
+                    pBar.style.background = "#10B981";
+                    showToast("Kompresi Berhasil!");
+
+                    setTimeout(() => {
+                        zipBtn.innerHTML = '<i class="fas fa-file-zipper"></i> Kompres Lagi';
+                    }, 2000);
+
+                } catch (err) {
+                    console.error(err);
+                    showToast("Terjadi kesalahan!", true);
+                    zipBtn.disabled = false;
+                    zipBtn.innerHTML = 'Mulai Kompresi';
+                }
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                if (!zipBlob) return;
+                const name = zipNameInput.value.trim() || "compressed_files";
+                saveAs(zipBlob, name + ".zip");
+                showToast("File diunduh!");
+            });
+        });
+    </script>
+</body>
+</html>
