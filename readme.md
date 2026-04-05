@@ -50,4 +50,4 @@ Aplikasi ini mengusung tema **Light Mode** yang bersih dengan *dotted background
 Distribusi di bawah lisensi **MIT**. Silakan cek file `LICENSE` untuk detail lebih lanjut.
 
 ---
-**Dibuat dengan ❤️ oleh [Hikmal Apriliano](https://github.com/hikmalapriliano) | © 2025**
+**Dibuat oleh [Hikmal Apriliano](https://github.com/hikmalapriliano) | © 2025**
